@@ -106,16 +106,24 @@ commits `data/lengau_observations.csv` (and `lengau_buckets.csv` if a gap was
 backfilled) straight back to `main`. The repo *is* the record; `git log data/`
 is the audit trail.
 
+It does **not** rely on GitHub's cron for the cadence. In practice a `*/10`
+schedule fired late by an hour or not at all, so instead one job loops
+poll → commit → sleep for 5.5 hours (the 6-hour job limit), then dispatches
+its successor. The half-hourly cron is only a backstop that restarts the
+chain if a run dies, and the `concurrency` group ensures only one poller ever
+holds the baton.
+
 The dashboard is served by GitHub Pages from the same branch, so it reads the
 CSV next to it and refreshes every 5 minutes:
 <https://nicolettechang.github.io/chpc-status/>
 
 Things to know:
 
-- **Cadence is best-effort.** GitHub runs `cron` schedules when it has capacity;
-  expect 10-20 min between polls and occasional longer gaps at busy times of
-  day. The script already treats a late poll as a gap, so the report stays
-  honest - it just has slightly coarser resolution than a local cron would.
+- **If polling stops**, Actions → poll → *Run workflow* restarts the chain by
+  hand. The cron backstop should do this on its own within an hour or so.
+- **The dashboard can lag a few minutes** behind the repo: GitHub Pages
+  rebuilds after each commit (~30 s) and its CDN caches the CSV for up to
+  10 min.
 - **Scheduled workflows are disabled after 60 days without repository
   activity.** The poller's own commits count as activity, so this should not
   trigger, but if polling stops, check Actions → poll for a "workflow disabled"

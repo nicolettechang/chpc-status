@@ -1,22 +1,28 @@
 # Poll the CHPC portal from a GitHub-hosted runner and commit the record back.
 #
 # This replaces the laptop LaunchAgent: a runner never sleeps, never switches
-# user, and always sees the portal from the same place. GitHub schedules cron
-# jobs on a best-effort basis, so expect the actual cadence to be 10-20 min
-# rather than exactly 10 - the observation timestamps are what count, and
-# lengau_status.py already treats a late poll as a gap rather than papering
-# over it.
+# user, and always sees the portal from the same place.
+#
+# Why a loop and not plain cron: GitHub runs `schedule` triggers on a
+# best-effort basis, and in practice a */10 cron fires late by 20-60 min or
+# not at all for stretches. So one job polls every 10 minutes for 5.5 hours
+# (the job limit is 6 h), then dispatches its successor. The cron is only a
+# backstop that restarts the chain if a run dies; the concurrency group makes
+# sure there is never more than one poller holding the baton.
 name: poll
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "17,47 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: write   # to dispatch the next run
 
-# Never let two polls run at once: both would try to push the same CSV.
+# Exactly one poller at a time. Extra runs (cron backstops, the successor we
+# dispatch) queue behind it and only the newest pending one survives, so the
+# baton passes cleanly when this run ends.
 concurrency:
   group: poll
   cancel-in-progress: false
@@ -24,30 +30,35 @@ concurrency:
 jobs:
   poll:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
 
-      - name: Poll the portal
-        id: poll
-        # A non-zero exit means 'unreachable' or 'parse failed'. Both are still
-        # logged as rows, so the commit step must run regardless.
-        run: python3 lengau_status.py || echo "rc=$?" >> "$GITHUB_OUTPUT"
-
-      - name: Commit the record
+      - name: Poll every 10 min for 5.5 h
+        env:
+          RUN_SECONDS: 19800       # 5.5 h
+          INTERVAL: 600
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/lengau_observations.csv data/lengau_buckets.csv
-          if git diff --cached --quiet; then
-            echo "nothing new to commit"
-            exit 0
-          fi
-          git commit -q -m "poll $(date -u +%Y-%m-%dT%H:%MZ)"
-          git pull --rebase -q
-          git push -q
+          failures=0
+          while (( SECONDS < RUN_SECONDS )); do
+            # A non-zero exit means 'unreachable' or 'parse failed'; the row is
+            # still logged, so commit regardless.
+            python3 lengau_status.py || failures=$((failures + 1))
+            git add data/lengau_observations.csv data/lengau_buckets.csv
+            if ! git diff --cached --quiet; then
+              git commit -q -m "poll $(date -u +%Y-%m-%dT%H:%MZ)"
+              git pull --rebase -q && git push -q || echo "::warning::push failed at $(date -u +%H:%MZ), will retry with next poll"
+            fi
+            # Sleep to the next INTERVAL boundary so the cadence stays even
+            # regardless of how long the poll took.
+            sleep $(( INTERVAL - SECONDS % INTERVAL ))
+          done
+          echo "polls with non-zero exit this run: $failures"
 
-      - name: Surface a failed poll
-        if: steps.poll.outputs.rc != ''
-        run: |
-          echo "::warning::lengau_status.py exited ${{ steps.poll.outputs.rc }} - the row was still logged; see the poll step output"
+      - name: Hand the baton to the next run
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run poll.yml --ref main
