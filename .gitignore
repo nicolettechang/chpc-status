@@ -1,0 +1,10 @@
+# Per-poll page snapshots (30-day rolling, ~1 MB): useful locally for forensics,
+# far too churny to version.
+data/raw/
+# launchd output from the old laptop agent
+data/*.log
+# scratch
+data/*.tmp
+data/*.bak
+__pycache__/
+.DS_Store

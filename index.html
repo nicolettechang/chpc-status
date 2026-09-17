@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lengau Uptime Record</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;1,400&display=swap">
+
+<style>
+:root {
+  color-scheme: light;
+  --ground:        #f2f4f3;
+  --surface:       #ffffff;
+  --surface-sunk:  #e8ebea;
+  --rule:          #d3d9d8;
+  --rule-strong:   #b6bfbe;
+  --ink:           #121817;
+  --ink-2:         #4e5a5a;
+  --ink-3:         #788483;
+  --accent:        #1d4e6f;
+  --accent-soft:   #dde7ed;
+  --good:          #0ca30c;
+  --critical:      #d03b3b;
+  --warning:       #fab219;
+  --nodata:        #a8b0b0;
+  --shadow:        0 1px 2px rgba(18,24,23,.06), 0 6px 18px rgba(18,24,23,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground:       #101414;
+    --surface:      #1a201f;
+    --surface-sunk: #232a29;
+    --rule:         #303938;
+    --rule-strong:  #47524f;
+    --ink:          #eef2f1;
+    --ink-2:        #a6b2b0;
+    --ink-3:        #7b8785;
+    --accent:       #6fb4d6;
+    --accent-soft:  #1f3442;
+    --good:         #0ca30c;
+    --critical:     #d03b3b;
+    --warning:      #fab219;
+    --nodata:       #5d6767;
+    --shadow:       0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground:       #101414;
+  --surface:      #1a201f;
+  --surface-sunk: #232a29;
+  --rule:         #303938;
+  --rule-strong:  #47524f;
+  --ink:          #eef2f1;
+  --ink-2:        #a6b2b0;
+  --ink-3:        #7b8785;
+  --accent:       #6fb4d6;
+  --accent-soft:  #1f3442;
+  --good:         #0ca30c;
+  --critical:     #d03b3b;
+  --warning:      #fab219;
+  --nodata:       #5d6767;
+  --shadow:       0 1px 2px rgba(0,0,0,.4), 0 6px 18px rgba(0,0,0,.3);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding-inline: 20px;
+  padding-block: 40px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+/* ---------------------------------------------------------------- masthead */
+
+.masthead { display: flex; flex-direction: column; gap: 14px; }
+
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 42px);
+  font-weight: 600;
+  letter-spacing: -.022em;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.standfirst {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--ink-2);
+  font-size: 16px;
+}
+
+.statusline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  padding-top: 4px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+.chip .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.chip.is-down { border-color: var(--critical); color: var(--critical); }
+.chip.is-down .dot { background: var(--critical); }
+.chip.is-up { border-color: var(--good); color: var(--good); }
+.chip.is-up .dot { background: var(--good); }
+.chip.is-unknown .dot { background: var(--nodata); }
+
+.stamp {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}
+
+/* ------------------------------------------------------------------- tiles */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.tile {
+  background: var(--surface);
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.tile dt {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin: 0;
+}
+.tile dd {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.tile .sub { font-size: 12.5px; color: var(--ink-3); font-weight: 400; letter-spacing: 0; }
+
+/* ------------------------------------------------------------------ panels */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+.panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 18px;
+  padding: 16px 20px 12px;
+}
+.panel-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .005em;
+}
+.panel-head .hint { font-size: 12.5px; color: var(--ink-3); }
+.panel-body { padding: 4px 20px 20px; }
+
+/* --------------------------------------------------------------- strip plot */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  padding: 0 20px 14px;
+}
+.legend span { display: inline-flex; align-items: center; gap: 7px; }
+.swatch { width: 22px; height: 10px; border-radius: 2px; flex: none; }
+.sw-up { background: var(--good); }
+.sw-down { background: var(--critical); }
+.sw-gap { background: repeating-linear-gradient(135deg, var(--nodata) 0 3px, transparent 3px 6px); border: 1px solid var(--rule-strong); }
+.sw-approx { background: var(--critical); opacity: .45; }
+
+.days { display: flex; flex-direction: column; gap: 9px; }
+
+.day {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.day-label {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--ink-2);
+  text-align: right;
+  white-space: nowrap;
+}
+.day-label .dow { color: var(--ink-3); }
+
+.track {
+  position: relative;
+  height: 26px;
+  border-radius: 4px;
+  background: var(--surface-sunk);
+  overflow: hidden;
+  cursor: crosshair;
+}
+.seg { position: absolute; top: 0; bottom: 0; }
+.seg.up { background: var(--good); }
+.seg.down { background: var(--critical); }
+.seg.approx { opacity: .45; }
+.seg.gap {
+  background: repeating-linear-gradient(135deg, var(--nodata) 0 3px, transparent 3px 6px);
+}
+.cursor {
+  position: absolute; top: 0; bottom: 0; width: 1px;
+  background: var(--ink); opacity: .55; pointer-events: none; display: none;
+}
+
+.axis {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  margin-top: 6px;
+}
+.axis-ticks {
+  position: relative;
+  height: 16px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--ink-3);
+}
+.axis-ticks span { position: absolute; top: 0; transform: translateX(-50%); }
+.axis-ticks span:first-child { transform: none; }
+.axis-ticks span:last-child { transform: translateX(-100%); }
+
+#tooltip {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  display: none;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  box-shadow: var(--shadow);
+  white-space: nowrap;
+}
+#tooltip b { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 600; }
+
+/* ------------------------------------------------------------------- table */
+
+.table-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 8px 14px 8px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+td.num, td.time { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: none; }
+.state { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+.state .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.state.up { color: var(--good); } .state.up .dot { background: var(--good); }
+.state.down { color: var(--critical); } .state.down .dot { background: var(--critical); }
+.state.gap { color: var(--ink-3); } .state.gap .dot { background: var(--nodata); }
+
+/* -------------------------------------------------------------------- load */
+
+.loader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 14px 20px 18px;
+}
+.filebtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.filebtn:hover { background: var(--surface-sunk); }
+.filebtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.loadnote { font-size: 13px; color: var(--ink-3); }
+.loadnote.err { color: var(--critical); }
+
+/* ------------------------------------------------------------------ method */
+
+.method {
+  border-left: 2px solid var(--rule-strong);
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.method h2 {
+  margin: 0;
+  font-size: 14px;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 500;
+}
+.method p {
+  margin: 0;
+  font-family: "IBM Plex Serif", Georgia, serif;
+  font-size: 15px;
+  line-height: 1.66;
+  max-width: 64ch;
+  color: var(--ink-2);
+}
+.method p strong { color: var(--ink); font-weight: 400; }
+.method code {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12.5px;
+  background: var(--surface-sunk);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.measure {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+  border-collapse: collapse;
+  width: auto;
+}
+.measure td, .measure th { padding: 5px 18px 5px 0; white-space: nowrap; }
+
+@media (max-width: 560px) {
+  .day, .axis { grid-template-columns: 62px 1fr; gap: 8px; }
+  .day-label { font-size: 10.5px; }
+  .day-label .dow { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+
+<style>img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">CHPC · Cape Town · recorded in SAST</div>
+    <h1>Lengau Uptime Record</h1>
+    <p class="standfirst">
+      An honest timeline of when Lengau was reachable, rebuilt from
+      <code style="font-family:'IBM Plex Mono',monospace;font-size:13px">users.chpc.ac.za/reports/</code>.
+      Measured observations and gap-filled guesses are drawn differently, because
+      the source page cannot tell you the difference.
+    </p>
+    <div class="statusline">
+      <span class="chip is-unknown" id="nowChip"><span class="dot"></span><span id="nowText">No record loaded</span></span>
+      <span class="stamp" id="nowStamp"></span>
+    </div>
+  </header>
+
+  <dl class="tiles" id="tiles"></dl>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Availability timeline</h2>
+      <span class="hint">one row per day, 00:00–24:00 SAST · hover for the state at a time</span>
+    </div>
+    <div class="legend">
+      <span><i class="swatch sw-up"></i>Reachable</span>
+      <span><i class="swatch sw-down"></i>Service disruption</span>
+      <span><i class="swatch sw-approx"></i>Approximate (bar-derived)</span>
+      <span><i class="swatch sw-gap"></i>No data — poller not running</span>
+    </div>
+    <div class="panel-body">
+      <div class="days" id="days"></div>
+      <div class="axis">
+        <div></div>
+        <div class="axis-ticks" id="axis"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Periods</h2>
+      <span class="hint">edges good to about half the polling interval</span>
+    </div>
+    <div class="panel-body table-scroll">
+      <table id="periods">
+        <thead>
+          <tr><th>State</th><th>From (SAST)</th><th>To (SAST)</th><th>Duration</th><th>Basis</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Load your own record</h2>
+      <span class="hint">stays in this browser — nothing is uploaded</span>
+    </div>
+    <div class="loader">
+      <label class="filebtn" for="csvfile">Choose lengau_observations.csv
+        <input type="file" id="csvfile" accept=".csv,text/csv">
+      </label>
+      <span class="loadnote" id="loadnote">Showing the calibration capture from 14 September 2026 - loading the live record…</span>
+    </div>
+  </section>
+
+  <section class="method">
+    <h2>How this record is made</h2>
+    <p>
+      The CHPC page draws recent status as forty-eight equal-width blocks labelled
+      <em>4h ago</em> on the left and <em>now</em> on the right. There is no API behind
+      it and no timestamp in the markup, so the tempting reading is
+      <strong>forty-eight blocks over four hours, five minutes each</strong>.
+    </p>
+    <p>
+      That reading does not survive measurement. Sampling the live bar and
+      cross-correlating consecutive reads shows how far the pattern scrolled left —
+      every fit below was exact, so the shifts are not in doubt:
+    </p>
+    <table class="measure">
+      <tr><th>Interval (UTC)</th><th>Elapsed</th><th>Blocks</th><th>s / block</th></tr>
+      <tr><td>19:21:10 → 19:27:29</td><td class="num">379 s</td><td class="num">1</td><td class="num">379</td></tr>
+      <tr><td>19:27:29 → 19:33:31</td><td class="num">362 s</td><td class="num">3</td><td class="num">121</td></tr>
+      <tr><td>19:33:31 → 19:36:14</td><td class="num">163 s</td><td class="num">1</td><td class="num">163</td></tr>
+      <tr><td><strong>19:21:10 → 19:36:14</strong></td><td class="num">904 s</td><td class="num">5</td><td class="num">181</td></tr>
+    </table>
+    <p>
+      Two things follow. The mean rate is about three minutes per block, so the bar
+      spans roughly <strong>2.4 hours, not the four it claims</strong>. More
+      importantly the spacing is not uniform — 379 seconds for one block, then 121
+      seconds each for three. The bar behaves like <em>the last forty-eight checks</em>
+      at an irregular cadence, not like a fixed time axis. Absolute times cannot be
+      recovered from the strokes alone.
+    </p>
+    <p>
+      So the poller does not try. It records the status with its own clock every ten
+      minutes — that interval, and nothing else, is the resolution of the green and red
+      above. The faded blocks are the page's own bar decoded onto its nominal axis,
+      written only when the Mac was asleep and something is better than nothing. The
+      hatched stretches are the honest admission that nothing was watching.
+    </p>
+  </section>
+
+</div>
+
+<div id="tooltip" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SAST_OFFSET_MS = 2 * 3600 * 1000;   // Africa/Johannesburg, no DST
+  var DAY_MS = 86400000;
+
+  // ---- seed: the real calibration capture of 14 Sep 2026 -------------------
+  // Four exact observations, plus the heartbeat bar as it stood at the last of
+  // them, decoded onto the page's own nominal axis (4 h / 48 blocks).
+  var SEED_OBS = [
+    { t: "2026-09-14T19:21:10Z", status: "down" },
+    { t: "2026-09-14T19:27:29Z", status: "down" },
+    { t: "2026-09-14T19:33:31Z", status: "down" },
+    { t: "2026-09-14T19:36:14Z", status: "down" }
+  ];
+  var SEED_BAR = "000010000000000000100000000011000010000110000000";
+  var SEED_BAR_END = "2026-09-14T19:36:14Z";
+  var SEED_BAR_WINDOW_H = 4;
+
+  var el = function (id) { return document.getElementById(id); };
+  var fmtTime = function (d) {
+    var s = new Date(d.getTime() + SAST_OFFSET_MS);
+    return pad(s.getUTCHours()) + ":" + pad(s.getUTCMinutes());
+  };
+  var fmtDateTime = function (d) {
+    var s = new Date(d.getTime() + SAST_OFFSET_MS);
+    return s.getUTCFullYear() + "-" + pad(s.getUTCMonth() + 1) + "-" + pad(s.getUTCDate()) +
+           " " + pad(s.getUTCHours()) + ":" + pad(s.getUTCMinutes());
+  };
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function dur(ms) {
+    var mins = Math.round(ms / 60000);
+    var h = Math.floor(mins / 60), m = mins % 60;
+    if (h >= 24) { var d = Math.floor(h / 24); return d + "d " + (h % 24) + "h"; }
+    return h > 0 ? h + "h " + pad(m) + "m" : m + "m";
+  }
+  var DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // ---- CSV (RFC 4180 enough for what the poller writes) --------------------
+  function parseCSV(text) {
+    var rows = [], row = [], field = "", q = false, i, c;
+    for (i = 0; i < text.length; i++) {
+      c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else { q = false; } }
+        else { field += c; }
+      } else if (c === '"') { q = true; }
+      else if (c === ",") { row.push(field); field = ""; }
+      else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+      else if (c !== "\r") { field += c; }
+    }
+    if (field.length || row.length) { row.push(field); rows.push(row); }
+    if (!rows.length) return [];
+    var head = rows.shift();
+    return rows.filter(function (r) { return r.length > 1; }).map(function (r) {
+      var o = {};
+      head.forEach(function (h, k) { o[h.trim()] = (r[k] || "").trim(); });
+      return o;
+    });
+  }
+
+  // ---- model ---------------------------------------------------------------
+  // Observations are point measurements. A change between two polls is
+  // attributed to their midpoint; a gap longer than `gapMs` is never bridged.
+  function buildSegments(obs, gapMs) {
+    var segs = [], prev = null, i;
+    for (i = 0; i < obs.length; i++) {
+      var t = obs[i].t, st = obs[i].status;
+      if (prev && t - prev.t > gapMs) {
+        segs[segs.length - 1].end = prev.t;
+        segs.push({ status: "gap", start: prev.t, end: t, basis: "none" });
+        segs.push({ status: st, start: t, end: t, basis: "measured" });
+      } else if (segs.length && segs[segs.length - 1].status === st) {
+        segs[segs.length - 1].end = t;
+      } else if (segs.length) {
+        var mid = new Date((segs[segs.length - 1].end.getTime() + t.getTime()) / 2);
+        segs[segs.length - 1].end = mid;
+        segs.push({ status: st, start: mid, end: t, basis: "measured" });
+      } else {
+        segs.push({ status: st, start: t, end: t, basis: "measured" });
+      }
+      prev = obs[i];
+    }
+    return segs.filter(function (s) { return s.end > s.start; });
+  }
+
+  function decodeBar(bar, endISO, windowH) {
+    var end = new Date(endISO).getTime();
+    var n = bar.length;
+    var block = windowH * 3600000 / n;
+    var out = [], i;
+    for (i = 0; i < n; i++) {
+      var st = bar[i] === "1" ? "up" : "down";
+      var s = end - (n - i) * block, e = s + block;
+      if (out.length && out[out.length - 1].status === st) out[out.length - 1].end = new Date(e);
+      else out.push({ status: st, start: new Date(s), end: new Date(e), basis: "approximate" });
+    }
+    return out;
+  }
+
+  function medianGap(obs) {
+    if (obs.length < 2) return 600000;
+    var d = [], i;
+    for (i = 1; i < obs.length; i++) d.push(obs[i].t - obs[i - 1].t);
+    d.sort(function (a, b) { return a - b; });
+    return d[Math.floor(d.length / 2)] || 600000;
+  }
+
+  // ---- render --------------------------------------------------------------
+  var state = { segs: [], obs: [], approx: [] };
+
+  function render() {
+    var all = state.approx.concat(state.segs);
+    renderNow();
+    renderTiles();
+    renderDays(all);
+    renderTable(all);
+  }
+
+  function renderNow() {
+    var chip = el("nowChip"), text = el("nowText"), stamp = el("nowStamp");
+    chip.className = "chip is-unknown";
+    if (!state.obs.length) { text.textContent = "No record loaded"; stamp.textContent = ""; return; }
+    var last = state.obs[state.obs.length - 1];
+    var up = last.status === "up";
+    chip.className = "chip " + (up ? "is-up" : last.status === "down" ? "is-down" : "is-unknown");
+    text.textContent = up ? "Reachable" : last.status === "down" ? "Service disruption" : last.status;
+    stamp.textContent = "as at " + fmtDateTime(last.t) + " SAST · " + state.obs.length +
+                        " observation" + (state.obs.length === 1 ? "" : "s");
+  }
+
+  function renderTiles() {
+    var measured = state.segs.filter(function (s) { return s.status === "up" || s.status === "down"; });
+    var known = measured.reduce(function (a, s) { return a + (s.end - s.start); }, 0);
+    var up = measured.reduce(function (a, s) { return s.status === "up" ? a + (s.end - s.start) : a; }, 0);
+    var outages = measured.filter(function (s) { return s.status === "down"; });
+    var longest = outages.reduce(function (a, s) { return Math.max(a, s.end - s.start); }, 0);
+    var span = state.obs.length ? state.obs[state.obs.length - 1].t - state.obs[0].t : 0;
+
+    var items = [
+      { k: "Availability", v: known ? (100 * up / known).toFixed(1) + "%" : "—",
+        s: known ? "of " + dur(known) + " measured" : "no measured time yet" },
+      { k: "Disruptions", v: outages.length ? String(outages.length) : "0",
+        s: outages.length ? "longest " + dur(longest) : "none recorded" },
+      { k: "Record spans", v: span ? dur(span) : "—",
+        s: state.obs.length + " polls" },
+      { k: "Coverage", v: span ? Math.round(100 * known / span) + "%" : "—",
+        s: span ? dur(span - known) + " unwatched" : "nothing watched yet" }
+    ];
+    el("tiles").innerHTML = items.map(function (it) {
+      return '<div class="tile"><dt>' + it.k + '</dt><dd>' + it.v +
+             '</dd><span class="sub">' + it.s + "</span></div>";
+    }).join("");
+  }
+
+  function renderDays(all) {
+    var host = el("days");
+    if (!all.length) { host.innerHTML = '<p class="loadnote">Nothing to draw yet.</p>'; return; }
+    var min = all[0].start.getTime(), max = all[0].end.getTime();
+    all.forEach(function (s) {
+      min = Math.min(min, s.start.getTime());
+      max = Math.max(max, s.end.getTime());
+    });
+    var d0 = Math.floor((min + SAST_OFFSET_MS) / DAY_MS);
+    var d1 = Math.floor((max + SAST_OFFSET_MS) / DAY_MS);
+
+    var html = "";
+    for (var d = d0; d <= d1; d++) {
+      var dayStart = d * DAY_MS - SAST_OFFSET_MS;
+      var dayEnd = dayStart + DAY_MS;
+      var label = new Date(dayStart + SAST_OFFSET_MS);
+      var pieces = "";
+      all.forEach(function (s) {
+        var a = Math.max(s.start.getTime(), dayStart), b = Math.min(s.end.getTime(), dayEnd);
+        if (b <= a) return;
+        var left = 100 * (a - dayStart) / DAY_MS, width = 100 * (b - a) / DAY_MS;
+        pieces += '<div class="seg ' + s.status + (s.basis === "approximate" ? " approx" : "") +
+                  '" style="left:' + left.toFixed(4) + "%;width:" + Math.max(width, 0.06).toFixed(4) + '%"></div>';
+      });
+      html += '<div class="day"><div class="day-label"><span class="dow">' +
+              DOW[label.getUTCDay()] + "</span> " + pad(label.getUTCDate()) + " " +
+              ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][label.getUTCMonth()] +
+              '</div><div class="track" data-start="' + dayStart + '">' + pieces +
+              '<div class="cursor"></div></div></div>';
+    }
+    host.innerHTML = html;
+
+    var axis = el("axis"), ticks = "";
+    for (var h = 0; h <= 24; h += 3) {
+      ticks += '<span style="left:' + (100 * h / 24) + '%">' + pad(h) + ":00</span>";
+    }
+    axis.innerHTML = ticks;
+    wireHover(all);
+  }
+
+  function wireHover(all) {
+    var tip = el("tooltip");
+    Array.prototype.forEach.call(document.querySelectorAll(".track"), function (track) {
+      var dayStart = +track.dataset.start;
+      var cursor = track.querySelector(".cursor");
+      track.addEventListener("mousemove", function (ev) {
+        var r = track.getBoundingClientRect();
+        var frac = Math.min(Math.max((ev.clientX - r.left) / r.width, 0), 1);
+        var t = dayStart + frac * DAY_MS;
+        var hit = null;
+        all.forEach(function (s) { if (t >= s.start.getTime() && t < s.end.getTime()) hit = s; });
+        cursor.style.display = "block";
+        cursor.style.left = (frac * 100) + "%";
+        var name = !hit ? "outside the record"
+          : hit.status === "up" ? "Reachable"
+          : hit.status === "down" ? "Service disruption" : "No data";
+        var basis = hit ? (hit.basis === "approximate" ? " · approximate" :
+                           hit.basis === "none" ? " · poller not running" : "") : "";
+        tip.innerHTML = "<b>" + fmtTime(new Date(t)) + "</b> &nbsp;" + name + basis +
+          (hit ? "<br>" + fmtTime(hit.start) + "–" + fmtTime(hit.end) + " · " + dur(hit.end - hit.start) : "");
+        tip.style.display = "block";
+        tip.style.left = Math.min(ev.clientX + 14, window.innerWidth - tip.offsetWidth - 10) + "px";
+        tip.style.top = (ev.clientY - tip.offsetHeight - 12) + "px";
+      });
+      track.addEventListener("mouseleave", function () {
+        tip.style.display = "none";
+        cursor.style.display = "none";
+      });
+    });
+  }
+
+  function renderTable(all) {
+    var body = document.querySelector("#periods tbody");
+    var rows = all.slice().sort(function (a, b) { return b.start - a.start; }).slice(0, 60);
+    if (!rows.length) { body.innerHTML = '<tr><td colspan="5">No periods yet.</td></tr>'; return; }
+    body.innerHTML = rows.map(function (s) {
+      var cls = s.status === "up" ? "up" : s.status === "down" ? "down" : "gap";
+      var name = s.status === "up" ? "Reachable" : s.status === "down" ? "Disruption" : "No data";
+      var basis = s.basis === "measured" ? "polled" : s.basis === "approximate" ? "page bar" : "—";
+      return "<tr><td><span class='state " + cls + "'><span class='dot'></span>" + name +
+        "</span></td><td class='time'>" + fmtDateTime(s.start) + "</td><td class='time'>" +
+        fmtDateTime(s.end) + "</td><td class='num'>" + dur(s.end - s.start) +
+        "</td><td>" + basis + "</td></tr>";
+    }).join("");
+  }
+
+  // ---- data in -------------------------------------------------------------
+  function loadObservations(rows, note) {
+    var obs = rows.map(function (r) {
+      return { t: new Date(r.observed_at_utc || r.t), status: r.status };
+    }).filter(function (o) {
+      return o.t && !isNaN(o.t) && (o.status === "up" || o.status === "down");
+    }).sort(function (a, b) { return a.t - b.t; });
+
+    state.obs = obs;
+    state.segs = buildSegments(obs, 3 * medianGap(obs));
+    state.approx = [];
+    render();
+    el("loadnote").className = "loadnote";
+    el("loadnote").textContent = note;
+  }
+
+  // seed
+  state.obs = SEED_OBS.map(function (o) { return { t: new Date(o.t), status: o.status }; });
+  state.segs = buildSegments(state.obs, 3 * medianGap(state.obs));
+  state.approx = decodeBar(SEED_BAR, SEED_BAR_END, SEED_BAR_WINDOW_H);
+  render();
+
+  // When served over http(s) - GitHub Pages, say - the poller's record lives
+  // next to this page, so load it directly and keep it fresh. Opened as a
+  // local file there is nothing to fetch, and the picker below still works.
+  var RECORD_URL = "data/lengau_observations.csv";
+  var RECORD_REFRESH_MS = 5 * 60 * 1000;
+  function fetchRecord() {
+    if (location.protocol !== "http:" && location.protocol !== "https:") return;
+    fetch(RECORD_URL, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    }).then(function (text) {
+      var rows = parseCSV(text);
+      if (!rows.length || !("status" in rows[0])) throw new Error("no status column");
+      var last = rows[rows.length - 1];
+      loadObservations(rows, "Live record · " + rows.length + " polls · last poll " +
+        fmtDateTime(new Date(last.observed_at_utc)) + " SAST → " + last.status);
+    }).catch(function (err) {
+      el("loadnote").className = "loadnote err";
+      el("loadnote").textContent = "Could not load " + RECORD_URL + " (" + err.message + ") - choose the file instead.";
+    });
+  }
+  fetchRecord();
+  setInterval(fetchRecord, RECORD_REFRESH_MS);
+
+  el("csvfile").addEventListener("change", function (ev) {
+    var file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var rows = parseCSV(String(reader.result));
+        if (!rows.length || !("status" in rows[0])) throw new Error("no status column");
+        loadObservations(rows, file.name + " · " + rows.length + " rows read");
+      } catch (err) {
+        el("loadnote").className = "loadnote err";
+        el("loadnote").textContent = "Could not read that file — expected the poller's lengau_observations.csv (" + err.message + ")";
+      }
+    };
+    reader.onerror = function () {
+      el("loadnote").className = "loadnote err";
+      el("loadnote").textContent = "Could not read that file.";
+    };
+    reader.readAsText(file);
+  });
+})();
+</script>
+
+</body>
+</html>
