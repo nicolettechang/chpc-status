@@ -391,3 +391,4 @@ observed_at_utc,observed_at_sast,status,headline,n_blocks,window_label_hours,n_u
 2026-09-18T15:04:27+00:00,2026-09-18T17:04:27+02:00,unreachable,,,,,,,fetch failed: HTTP Error 502: Bad Gateway
 2026-09-18T15:14:27+00:00,2026-09-18T17:14:27+02:00,down,Service Disruption,48,4,42,6,GGGGGGGGGGGGGGGGGGGGGGGRRGGGGGGGGGGGGGGGGGGRRGRR,
 2026-09-18T15:24:27+00:00,2026-09-18T17:24:27+02:00,unreachable,,,,,,,fetch failed: <urlopen error [Errno 104] Connection reset by peer>
+2026-09-18T15:34:27+00:00,2026-09-18T17:34:27+02:00,down,Service Disruption,48,4,35,13,GGGGGGGGGGGGGGGGRRGGGGGGGGGGGGGGGGGGRRGRRRRRRRRR,
