@@ -1,28 +1,27 @@
 # Poll the CHPC portal from a GitHub-hosted runner and commit the record back.
 #
-# This replaces the laptop LaunchAgent: a runner never sleeps, never switches
-# user, and always sees the portal from the same place.
+# One job polls every 10 minutes for 5.5 hours (the job limit is 6 h), then
+# dispatches its successor. GitHub's own `schedule` trigger is far too
+# unreliable to set the cadence - a */10 cron fired late by an hour or not at
+# all - so the loop owns the timing and watchdog.yml only restarts the chain
+# if it stops.
 #
-# Why a loop and not plain cron: GitHub runs `schedule` triggers on a
-# best-effort basis, and in practice a */10 cron fires late by 20-60 min or
-# not at all for stretches. So one job polls every 10 minutes for 5.5 hours
-# (the job limit is 6 h), then dispatches its successor. The cron is only a
-# backstop that restarts the chain if a run dies; the concurrency group makes
-# sure there is never more than one poller holding the baton.
+# Every iteration resets to origin/main before polling. An earlier version
+# rebased instead, and when a rebase failed the run kept polling for its full
+# 5.5 hours with every commit stuck locally, then died with the lot: two
+# complete windows (19 and 20 September) are missing from the record because
+# of it. Resetting cannot fail that way, and rows whose push loses a race are
+# carried forward and replayed rather than dropped.
 name: poll
 
 on:
-  schedule:
-    - cron: "17,47 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
-  actions: write   # to dispatch the next run
+  actions: write   # to dispatch the successor
 
-# Exactly one poller at a time. Extra runs (cron backstops, the successor we
-# dispatch) queue behind it and only the newest pending one survives, so the
-# baton passes cleanly when this run ends.
+# One poller at a time.
 concurrency:
   group: poll
   cancel-in-progress: false
@@ -36,26 +35,60 @@ jobs:
 
       - name: Poll every 10 min for 5.5 h
         env:
-          RUN_SECONDS: 19800       # 5.5 h
-          INTERVAL: 600
+          RUN_SECONDS: 19800    # 5.5 h
+          INTERVAL: 600         # 10 min
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          failures=0
+
+          OBS=data/lengau_observations.csv
+          BUK=data/lengau_buckets.csv
+          CARRY_OBS="$RUNNER_TEMP/carry-observations.csv"
+          CARRY_BUK="$RUNNER_TEMP/carry-buckets.csv"
+          polls=0; failed=0; carried=0
+
           while (( SECONDS < RUN_SECONDS )); do
-            # A non-zero exit means 'unreachable' or 'parse failed'; the row is
-            # still logged, so commit regardless.
-            python3 lengau_status.py || failures=$((failures + 1))
-            git add data/lengau_observations.csv data/lengau_buckets.csv
+            # Start from what origin actually has, so this run can never end up
+            # arguing with history it has fallen behind.
+            if git fetch -q origin; then
+              git reset --hard -q origin/main
+            else
+              echo "::warning::fetch failed at $(date -u +%H:%MZ); polling on the last known base"
+            fi
+
+            # Replay anything a previous push could not land.
+            if [[ -s "$CARRY_OBS" ]]; then python3 tools/merge_rows.py "$OBS" "$CARRY_OBS"; fi
+            if [[ -s "$CARRY_BUK" ]]; then python3 tools/merge_rows.py "$BUK" "$CARRY_BUK"; fi
+
+            # A non-zero exit means 'unreachable' or 'parse failed'. Both are
+            # real observations and are still committed.
+            python3 lengau_status.py || failed=$(( failed + 1 ))
+            polls=$(( polls + 1 ))
+
+            git add "$OBS" "$BUK"
             if ! git diff --cached --quiet; then
               git commit -q -m "poll $(date -u +%Y-%m-%dT%H:%MZ)"
-              git pull --rebase -q && git push -q || echo "::warning::push failed at $(date -u +%H:%MZ), will retry with next poll"
+              if git push -q 2>/dev/null; then
+                : > "$CARRY_OBS"; : > "$CARRY_BUK"
+              else
+                # Someone else pushed first. Keep our rows; the next iteration
+                # resets to their history and merges ours back in.
+                cp "$OBS" "$CARRY_OBS"; cp "$BUK" "$CARRY_BUK"
+                carried=$(( carried + 1 ))
+                echo "::warning::push lost a race at $(date -u +%H:%MZ); rows carried to the next poll"
+              fi
             fi
-            # Sleep to the next INTERVAL boundary so the cadence stays even
-            # regardless of how long the poll took.
+
+            # Sleep to the next interval boundary, so a slow poll does not
+            # drag the cadence.
             sleep $(( INTERVAL - SECONDS % INTERVAL ))
           done
-          echo "polls with non-zero exit this run: $failures"
+
+          echo "polls=$polls unreachable_or_unparsed=$failed pushes_retried=$carried"
+          if [[ -s "$CARRY_OBS" ]]; then
+            echo "::error::run ended with rows that never pushed"
+            exit 1
+          fi
 
       - name: Hand the baton to the next run
         if: always()

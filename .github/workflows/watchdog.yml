@@ -1,0 +1,44 @@
+# Restart the poller if the record stops growing.
+#
+# poll.yml keeps itself going by dispatching a successor, so this only has to
+# catch the case where a run dies without handing over. It checks the record
+# rather than the workflow's own status: a run that is alive but not
+# committing is just as broken as one that is gone, and that is exactly the
+# failure that cost two windows in September.
+name: watchdog
+
+on:
+  schedule:
+    - cron: "23 * * * *"   # hourly, offset off the hour to avoid the rush
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: How old is the newest row?
+        id: check
+        run: |
+          last=$(tail -n 1 data/lengau_observations.csv | cut -d, -f1)
+          age=$(( $(date -u +%s) - $(date -u -d "$last" +%s) ))
+          echo "last poll $last, $(( age / 60 )) min ago"
+          if (( age > 1800 )); then
+            echo "stalled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "stalled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Restart the poller
+        if: steps.check.outputs.stalled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "::warning::no poll committed for over 30 min - restarting the poller"
+          gh workflow run poll.yml --ref main

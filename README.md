@@ -109,9 +109,18 @@ is the audit trail.
 It does **not** rely on GitHub's cron for the cadence. In practice a `*/10`
 schedule fired late by an hour or not at all, so instead one job loops
 poll → commit → sleep for 5.5 hours (the 6-hour job limit), then dispatches
-its successor. The half-hourly cron is only a backstop that restarts the
-chain if a run dies, and the `concurrency` group ensures only one poller ever
-holds the baton.
+its successor. `watchdog.yml` checks hourly that the newest row is less than
+30 minutes old and restarts the chain if not - it watches the record rather
+than the workflow's status, because a run that is alive but not committing is
+just as broken as one that has died.
+
+Each iteration resets to `origin/main` before polling, and rows whose push
+loses a race are carried forward and merged back in by `tools/merge_rows.py`.
+The first version rebased instead, and a failed rebase left the run polling
+for its full 5.5 hours with every commit stuck locally before dying with the
+lot - which is why **19 and 20 September each have a 5 h 40 min hole** in the
+record. Nothing was silently filled in: the report and dashboard show those
+as `no data`.
 
 The dashboard is served by GitHub Pages from the same branch, so it reads the
 CSV next to it and refreshes every 5 minutes:
