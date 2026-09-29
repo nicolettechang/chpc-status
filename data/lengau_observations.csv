@@ -1931,3 +1931,4 @@ observed_at_utc,observed_at_sast,status,headline,n_blocks,window_label_hours,n_u
 2026-09-29T22:22:35+00:00,2026-09-30T00:22:35+02:00,down,Service Disruption,48,4,37,11,GGGGGGGGGGRRGGGGGGGGGGGGRRGGGGGGGGGGGGRRGGGRRRRR,
 2026-09-29T22:32:36+00:00,2026-09-30T00:32:36+02:00,up,Operational,48,4,36,12,GGGGGGGRRGGGGGGGGGGGGRRGGGGGGGGGGGGRRGGGRRRRRRGG,
 2026-09-29T22:42:35+00:00,2026-09-30T00:42:35+02:00,unreachable,,,,,,,fetch failed: <urlopen error [Errno -3] Temporary failure in name resolution>
+2026-09-29T22:52:35+00:00,2026-09-30T00:52:35+02:00,unreachable,,,,,,,fetch failed: <urlopen error [Errno -5] No address associated with hostname>
