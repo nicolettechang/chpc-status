@@ -1898,3 +1898,4 @@ observed_at_utc,observed_at_sast,status,headline,n_blocks,window_label_hours,n_u
 2026-09-29T16:52:26+00:00,2026-09-29T18:52:26+02:00,unreachable,,,,,,,fetch failed: <urlopen error [Errno -3] Temporary failure in name resolution>
 2026-09-29T17:02:26+00:00,2026-09-29T19:02:26+02:00,unreachable,,,,,,,fetch failed: <urlopen error [Errno -3] Temporary failure in name resolution>
 2026-09-29T17:12:26+00:00,2026-09-29T19:12:26+02:00,unreachable,,,,,,,fetch failed: <urlopen error [Errno -3] Temporary failure in name resolution>
+2026-09-29T17:22:25+00:00,2026-09-29T19:22:25+02:00,unreachable,,,,,,,fetch failed: <urlopen error [Errno -3] Temporary failure in name resolution>
