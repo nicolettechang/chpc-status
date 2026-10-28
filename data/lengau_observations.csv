@@ -5991,3 +5991,4 @@ observed_at_utc,observed_at_sast,status,headline,n_blocks,window_label_hours,n_u
 2026-10-28T08:48:22+00:00,2026-10-28T10:48:22+02:00,unreachable,,,,,,,fetch failed: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1000)>
 2026-10-28T08:58:22+00:00,2026-10-28T10:58:22+02:00,unreachable,,,,,,,fetch failed: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1000)>
 2026-10-28T09:08:23+00:00,2026-10-28T11:08:23+02:00,up,Operational,48,4,36,12,GGGGGGGGGGGRRGRRRRRRGGGGGGGGGGGGGGGGGGGGGGRRRRGG,
+2026-10-28T09:18:23+00:00,2026-10-28T11:18:23+02:00,down,Service Disruption,48,4,34,14,GGGGGGGGRRGRRRRRRGGGGGGGGGGGGGGGGGGGGGGRRRRGGGRR,
