@@ -6742,3 +6742,4 @@ observed_at_utc,observed_at_sast,status,headline,n_blocks,window_label_hours,n_u
 2026-11-02T14:01:43+00:00,2026-11-02T16:01:43+02:00,unknown,,,,,,,parse failed: no heartbeat blocks found - page layout probably changed
 2026-11-02T14:11:43+00:00,2026-11-02T16:11:43+02:00,unknown,,,,,,,parse failed: no heartbeat blocks found - page layout probably changed
 2026-11-02T14:21:44+00:00,2026-11-02T16:21:44+02:00,unknown,,,,,,,parse failed: no heartbeat blocks found - page layout probably changed
+2026-11-02T14:31:43+00:00,2026-11-02T16:31:43+02:00,unknown,,,,,,,parse failed: no heartbeat blocks found - page layout probably changed
