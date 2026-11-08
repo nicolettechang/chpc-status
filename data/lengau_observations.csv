@@ -7620,3 +7620,4 @@ observed_at_utc,observed_at_sast,status,headline,n_blocks,window_label_hours,n_u
 2026-11-08T16:26:02+00:00,2026-11-08T18:26:02+02:00,unreachable,,,,,,,fetch failed: <urlopen error [Errno 104] Connection reset by peer>
 2026-11-08T16:36:02+00:00,2026-11-08T18:36:02+02:00,unknown,,,,,,,parse failed: no heartbeat blocks found - page layout probably changed
 2026-11-08T16:46:02+00:00,2026-11-08T18:46:02+02:00,unknown,,,,,,,parse failed: no heartbeat blocks found - page layout probably changed
+2026-11-08T16:56:03+00:00,2026-11-08T18:56:03+02:00,unknown,,,,,,,parse failed: no heartbeat blocks found - page layout probably changed
