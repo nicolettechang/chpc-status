@@ -9084,3 +9084,4 @@ observed_at_utc,observed_at_sast,status,headline,n_blocks,window_label_hours,n_u
 2026-11-18T20:32:50+00:00,2026-11-18T22:32:50+02:00,unreachable,,,,,,,fetch failed: <urlopen error timed out>
 2026-11-18T20:42:50+00:00,2026-11-18T22:42:50+02:00,unreachable,,,,,,,fetch failed: <urlopen error timed out>
 2026-11-18T20:52:49+00:00,2026-11-18T22:52:49+02:00,unreachable,,,,,,,fetch failed: <urlopen error timed out>
+2026-11-18T21:02:49+00:00,2026-11-18T23:02:49+02:00,unreachable,,,,,,,fetch failed: <urlopen error timed out>
